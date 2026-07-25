@@ -26,6 +26,7 @@ Pipeline completo:
 import os
 import textwrap
 from pathlib import Path
+from typing import AsyncGenerator
 
 from dotenv import load_dotenv
 
@@ -68,8 +69,16 @@ CONTEXTUALIZE_PROMPT = ChatPromptTemplate.from_messages([
 ])
 
 # ── PROMPT 2: Resposta com histórico ─────────────────────────────────────────
-# O Claude recebe: contexto dos docs + histórico + pergunta atual.
-# O histórico aqui serve para manter coerência (não repetir, usar mesmo tom).
+# Técnica: prefilled messages + stop sequences
+#   • ("ai", "") → prefill vazio: força o modelo a começar respondendo diretamente,
+#     sem preamble ("Com base nos documentos...", "Claro!", etc.)
+#   • stop=[...] aplicado no LLM → interrompe antes de seções de notas/fontes
+#     que o modelo às vezes adiciona espontaneamente
+# Técnica: prefilled messages + stop sequences
+# O prefill é implementado via instrução direta no system prompt ("Comece sua resposta
+# diretamente") — equivalente funcional para modelos OpenAI-compat como Groq,
+# onde passar um AIMessage vazio como último turno pode truncar o astream.
+# As stop sequences são aplicadas via llm.bind(stop=[...]) no __init__.
 ANSWER_PROMPT = ChatPromptTemplate.from_messages([
     (
         "system",
@@ -77,6 +86,7 @@ ANSWER_PROMPT = ChatPromptTemplate.from_messages([
         "Use APENAS as informações dos trechos abaixo para responder. "
         "Cite o arquivo de origem entre colchetes, ex: [politica_empresa.txt]. "
         "Se a resposta não estiver nos trechos, diga que não encontrou. "
+        "Comece sua resposta diretamente, sem introduções como 'Com base nos documentos' ou 'Claro!'. "
         "Leve em conta o histórico da conversa para manter coerência.\n\n"
         "Trechos recuperados:\n{context}",
     ),
@@ -124,8 +134,11 @@ class ConversationalRAG:
         # StrOutputParser converte AIMessage → string pura
         self.contextualizer = CONTEXTUALIZE_PROMPT | llm | StrOutputParser()
 
+        # stop sequences: interrompe o LLM antes que ele adicione seções extras
+        _llm_with_stop = llm.bind(stop=["\n\nNota:", "\n\nObservação:", "\n\n---"])
+
         # Sub-chain da resposta final
-        self.answerer = ANSWER_PROMPT | llm | StrOutputParser()
+        self.answerer = ANSWER_PROMPT | _llm_with_stop | StrOutputParser()
 
     def _format_context(self, docs) -> str:
         """Formata os chunks com nome do arquivo para o Claude citar."""
@@ -185,6 +198,43 @@ class ConversationalRAG:
         self.history.add_ai_message(answer)
 
         return {"answer": answer, "sources": sources}
+
+    async def ask_stream(self, question: str) -> AsyncGenerator:
+        """
+        Versão streaming de ask().
+        Yields: tokens de texto (str) enquanto o LLM gera a resposta,
+                seguido de um dict {"sources": [...]} como último item.
+
+        O chamador distingue pelo tipo:
+          str  → token para exibir em tempo real
+          dict → metadados finais (fontes consultadas)
+        """
+        chat_history = self.history.messages
+
+        if chat_history:
+            standalone_question = self.contextualizer.invoke({
+                "chat_history": chat_history,
+                "question": question,
+            })
+        else:
+            standalone_question = question
+
+        docs = self.retriever.invoke(standalone_question)
+        context = self._format_context(docs)
+        sources = self._get_sources(docs)
+
+        full_answer = ""
+        async for token in self.answerer.astream({
+            "context": context,
+            "chat_history": chat_history,
+            "question": question,
+        }):
+            full_answer += token
+            yield token
+
+        self.history.add_user_message(question)
+        self.history.add_ai_message(full_answer)
+        yield {"sources": sources}
 
     def clear_history(self):
         """Limpa o histórico para começar uma nova conversa."""

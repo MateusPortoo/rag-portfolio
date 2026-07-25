@@ -8,6 +8,7 @@ Para usar:
   Terminal 2: streamlit run src/app.py
 """
 
+import json
 import requests
 import streamlit as st
 
@@ -117,16 +118,39 @@ def api_health() -> dict | None:
         return None
 
 
-def api_chat(question: str) -> dict | None:
-    try:
-        r = requests.post(
-            f"{API_BASE}/chat",
-            json={"question": question},
-            timeout=60,
-        )
-        return r.json() if r.ok else {"answer": f"Erro da API: {r.text}", "sources": []}
-    except requests.exceptions.ConnectionError:
-        return None
+def api_chat_stream(question: str):
+    """
+    Chama /chat/stream e retorna (generator_de_tokens, lista_de_fontes).
+    O generator é passado para st.write_stream; fontes são preenchidas
+    via closure durante a iteração e lidas depois que o stream termina.
+    """
+    sources: list[str] = []
+
+    def token_generator():
+        try:
+            with requests.post(
+                f"{API_BASE}/chat/stream",
+                json={"question": question},
+                stream=True,
+                timeout=60,
+            ) as r:
+                for raw_line in r.iter_lines():
+                    if not raw_line:
+                        continue
+                    line = raw_line.decode("utf-8") if isinstance(raw_line, bytes) else raw_line
+                    if not line.startswith("data: "):
+                        continue
+                    event = json.loads(line[6:])
+                    if "token" in event:
+                        yield event["token"]
+                    elif event.get("done"):
+                        sources.extend(event.get("sources", []))
+                    elif "error" in event:
+                        yield f"\n\n⚠️ {event['error']}"
+        except requests.exceptions.ConnectionError:
+            yield "⚠️ Não foi possível conectar à API."
+
+    return token_generator(), sources
 
 
 def api_list_documents() -> list[dict]:
@@ -225,7 +249,7 @@ with st.sidebar:
 
     st.markdown("---")
     st.caption("RAG Portfolio · Fase 8")
-    st.caption("Claude claude-sonnet-4-6 · ChromaDB · LangChain")
+    st.caption("Groq llama-3.1-8b · ChromaDB · LangChain")
 
 
 # ── ÁREA DE CHAT PRINCIPAL ────────────────────────────────────────────────────
@@ -272,19 +296,13 @@ if question := st.chat_input(
         "sources": [],
     })
 
-    # Chama a API e exibe a resposta com spinner
+    # Streaming: exibe tokens em tempo real com st.write_stream
     with st.chat_message("assistant"):
-        with st.spinner("Pensando..."):
-            result = api_chat(question)
+        token_gen, sources = api_chat_stream(question)
+        answer = st.write_stream(token_gen)   # retorna o texto completo ao fim
 
-        if result is None:
+        if not answer:
             answer = "⚠️ Não foi possível conectar à API. Verifique se ela está rodando."
-            sources = []
-        else:
-            answer = result.get("answer", "Sem resposta.")
-            sources = result.get("sources", [])
-
-        st.markdown(answer)
 
         if sources:
             sources_html = "".join(

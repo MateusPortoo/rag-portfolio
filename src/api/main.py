@@ -15,14 +15,17 @@ Para rodar:
 Depois abra: http://localhost:8000/docs  (documentação interativa automática)
 """
 
+import json
 import os
 import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import AsyncGenerator
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 
 # Adiciona a raiz do projeto ao path para importar módulos locais
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -183,6 +186,36 @@ async def chat(request: ChatRequest):
         sources=result["sources"],
         question=request.question,
     )
+
+
+@app.post("/chat/stream", tags=["Chat"])
+async def chat_stream(request: ChatRequest):
+    """
+    Streaming de resposta via Server-Sent Events (SSE).
+
+    Cada evento tem formato: data: <json>\\n\\n
+
+    Tipos de evento:
+      {"token": "..."} → fragmento de texto gerado pelo LLM em tempo real
+      {"done": true, "sources": [...]} → fim da resposta com fontes consultadas
+      {"error": "..."} → falha durante a geração
+    """
+    rag: ConversationalRAG = app_state.get("rag")
+    if not rag:
+        raise HTTPException(status_code=503, detail="RAG não inicializado.")
+
+    async def event_stream() -> AsyncGenerator[str, None]:
+        try:
+            async for chunk in rag.ask_stream(request.question):
+                if isinstance(chunk, str):
+                    yield f"data: {json.dumps({'token': chunk}, ensure_ascii=False)}\n\n"
+                elif isinstance(chunk, dict):
+                    yield f"data: {json.dumps({'done': True, 'sources': chunk['sources']}, ensure_ascii=False)}\n\n"
+        except Exception as e:
+            print(f"[error] Streaming falhou: {e}")
+            yield f"data: {json.dumps({'error': 'Erro ao gerar resposta.'})}\n\n"
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
 @app.get("/chat/history", response_model=HistoryResponse, tags=["Chat"])
