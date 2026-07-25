@@ -1,0 +1,23 @@
+# Banco vetorial — recriado dentro do container via volume
+data/chroma_db/
+data/chroma_db_v4/
+
+# Cache do Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Ambiente virtual local
+.venv/
+venv/
+
+# Variáveis de ambiente — injetadas via env_file no docker-compose
+.env
+
+# Git
+.git/
+.gitignore
+
+# Cache do HuggingFace (modelo baixado na primeira execução do container)
+~/.cache/

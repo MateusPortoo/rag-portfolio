@@ -1,0 +1,71 @@
+services:
+
+  # ── Backend: FastAPI + RAG ───────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rag-api
+
+    # Comando que sobe o servidor FastAPI
+    # --host 0.0.0.0: aceita conexões de fora do container (obrigatório no Docker)
+    # --port 8000: porta interna
+    # sem --reload: reload é só para desenvolvimento local
+    command: uvicorn src.api.main:app --host 0.0.0.0 --port 8000
+
+    ports:
+      - "8000:8000"    # host:container
+
+    # Variáveis de ambiente lidas do arquivo .env na raiz do projeto
+    env_file:
+      - .env
+
+    volumes:
+      # Monta a pasta data/ como volume persistente.
+      # Isso significa que o ChromaDB e os documentos sobrevivem a um
+      # `docker compose down` — só são perdidos com `docker compose down -v`
+      - ./data:/app/data
+
+    # Healthcheck: Docker verifica periodicamente se a API está respondendo.
+    # O Streamlit só sobe quando esta verificação passar.
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s     # verifica a cada 10 segundos
+      timeout: 5s       # timeout de cada verificação
+      retries: 5        # tenta 5 vezes antes de marcar como unhealthy
+      start_period: 40s # aguarda 40s antes de começar (tempo de carregar embeddings)
+
+    restart: unless-stopped
+
+  # ── Frontend: Streamlit ──────────────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rag-app
+
+    # --server.address 0.0.0.0: aceita conexões externas (obrigatório no Docker)
+    # --server.headless true: desativa abertura automática do browser
+    command: streamlit run src/app.py
+             --server.port 8501
+             --server.address 0.0.0.0
+             --server.headless true
+
+    ports:
+      - "8501:8501"
+
+    env_file:
+      - .env
+
+    # Sobrescreve a URL da API para usar o nome do serviço Docker
+    # Dentro da rede Docker, "api" resolve para o container da FastAPI
+    environment:
+      - API_BASE=http://api:8000
+
+    # Garante que o Streamlit só sobe quando a API estiver saudável
+    depends_on:
+      api:
+        condition: service_healthy
+
+    restart: unless-stopped

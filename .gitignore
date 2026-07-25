@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+
+# Ambiente
+.env
+
+# ChromaDB — bancos vetoriais gerados localmente (não commitar)
+data/chroma_db/
+data/chroma_db_v4/
+
+# Modelos de embedding (cache do HuggingFace, ~90MB)
+# Ficam em ~/.cache/huggingface/ — não precisam estar no repo

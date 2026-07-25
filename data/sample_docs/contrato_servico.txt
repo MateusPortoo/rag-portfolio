@@ -1,0 +1,80 @@
+CONTRATO DE PRESTAÇÃO DE SERVIÇOS DE TI
+Empresa Exemplo Ltda × Fornecedora Tech S.A.
+Versão 2.1 | Vigência: janeiro de 2024 a dezembro de 2024
+
+═══════════════════════════════════════════════════
+CLÁUSULA 1 — OBJETO DO CONTRATO
+═══════════════════════════════════════════════════
+
+1.1 A Fornecedora Tech S.A. ("Fornecedora") prestará à Empresa Exemplo
+Ltda ("Contratante") os seguintes serviços de tecnologia da informação:
+
+a) Manutenção e suporte do sistema ERP corporativo (Módulos: Financeiro,
+   RH, Estoque e Compras)
+b) Suporte técnico de nível 1 e nível 2 para usuários internos
+c) Monitoramento de infraestrutura 24×7
+d) Backup diário e recuperação de desastres (RTO máximo de 4 horas)
+
+1.2 Serviços excluídos deste contrato: desenvolvimento de novas
+funcionalidades, migração de dados históricos anteriores a 2020, e
+suporte a sistemas de terceiros não listados no Anexo A.
+
+═══════════════════════════════════════════════════
+CLÁUSULA 2 — PRAZO E RENOVAÇÃO
+═══════════════════════════════════════════════════
+
+2.1 Vigência inicial de 12 meses, com início em 1º de janeiro de 2024.
+
+2.2 O contrato renova-se automaticamente por períodos iguais, salvo
+notificação contrária por escrito com antecedência mínima de 60 dias
+antes do término de cada período.
+
+2.3 Qualquer das partes pode rescindir o contrato sem justa causa mediante
+aviso prévio de 90 dias, sem incidência de multa rescisória.
+
+═══════════════════════════════════════════════════
+CLÁUSULA 3 — PAGAMENTO
+═══════════════════════════════════════════════════
+
+3.1 O valor mensal do contrato é de R$ 28.500,00 (vinte e oito mil e
+quinhentos reais), corrigido anualmente pelo IGP-M.
+
+3.2 O pagamento deve ser efetuado até o dia 15 de cada mês, mediante
+emissão de nota fiscal até o dia 5 do mesmo mês.
+
+3.3 Atrasos no pagamento incorrem em multa de 2% sobre o valor devido,
+acrescida de juros de 1% ao mês pro rata die.
+
+3.4 Em caso de inadimplência superior a 30 dias, a Fornecedora pode
+suspender os serviços após notificação formal por escrito.
+
+═══════════════════════════════════════════════════
+CLÁUSULA 4 — NÍVEIS DE SERVIÇO (SLA)
+═══════════════════════════════════════════════════
+
+4.1 Disponibilidade do sistema ERP: mínimo de 99,5% no horário comercial
+(segunda a sexta, 8h às 18h).
+
+4.2 Tempo de resposta para chamados por criticidade:
+  - Crítico (sistema indisponível): 30 minutos para início do atendimento
+  - Alto (módulo indisponível): 2 horas
+  - Médio (funcionalidade degradada): 8 horas úteis
+  - Baixo (dúvida ou melhoria): 3 dias úteis
+
+4.3 Penalidades por descumprimento de SLA:
+  Disponibilidade abaixo de 99,5%: desconto de 5% na mensalidade por
+  cada 0,5% de indisponibilidade adicional, limitado a 20% do valor total.
+
+═══════════════════════════════════════════════════
+CLÁUSULA 5 — CONFIDENCIALIDADE E LGPD
+═══════════════════════════════════════════════════
+
+5.1 A Fornecedora compromete-se a manter sigilo absoluto sobre dados
+de clientes, processos internos e informações estratégicas da Contratante.
+
+5.2 O tratamento de dados pessoais seguirá rigorosamente a Lei Geral de
+Proteção de Dados (Lei 13.709/2018). A Fornecedora atua como operadora
+dos dados; a Contratante permanece como controladora.
+
+5.3 Em caso de incidente de segurança, a Fornecedora notificará a
+Contratante em até 24 horas após a detecção.
