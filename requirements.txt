@@ -1,7 +1,7 @@
 # ── Core RAG pipeline ──────────────────────────────────────────────────────
 langchain==0.3.25               # Orquestração do pipeline RAG
 langchain-community==0.3.24     # Integrações: loaders, vector stores
-langchain-google-genai==2.1.4   # Integração Gemini API
+langchain-groq==0.2.5           # Integração Groq API (LLM rápido e gratuito)
 
 # ── Document parsing ────────────────────────────────────────────────────────
 pypdf==5.6.0                    # Lê PDFs página a página
@@ -28,4 +28,4 @@ httpx==0.28.1                   # Necessário pelo TestClient do FastAPI
 
 # ── Utilities ───────────────────────────────────────────────────────────────
 python-dotenv==1.1.0            # Lê variáveis de ambiente do .env
-google-generativeai==0.8.5      # SDK oficial do Google Gemini
+groq==0.13.1                    # SDK oficial da Groq

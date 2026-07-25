@@ -31,7 +31,7 @@ from dotenv import load_dotenv
 
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_core.chat_history import InMemoryChatMessageHistory as ChatMessageHistory
@@ -47,7 +47,7 @@ PERSIST_DIR = Path(__file__).parent.parent / "data" / "chroma_db_v4"
 
 COLLECTION_NAME = "multi_doc_collection"
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
-GEMINI_MODEL    = "gemini-2.0-flash"
+GROQ_MODEL      = "llama-3.1-8b-instant"
 K_CHUNKS        = 4
 
 # ── PROMPT 1: Reformulador ────────────────────────────────────────────────────
@@ -115,7 +115,7 @@ class ConversationalRAG:
     Uma função pura não consegue guardar o histórico entre invocações.
     """
 
-    def __init__(self, vector_store: Chroma, llm: ChatGoogleGenerativeAI):
+    def __init__(self, vector_store: Chroma, llm: ChatGroq):
         self.retriever = vector_store.as_retriever(search_kwargs={"k": K_CHUNKS})
         self.llm = llm
         self.history = ChatMessageHistory()  # começa vazio, cresce durante a sessão
@@ -246,9 +246,9 @@ def main():
     print("  FASE 5 — RAG com Histórico de Chat")
     print("=" * 70 + "\n")
 
-    api_key = os.getenv("GOOGLE_API_KEY")
+    api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
-        raise EnvironmentError("GOOGLE_API_KEY não encontrada no .env")
+        raise EnvironmentError("GROQ_API_KEY não encontrada no .env")
 
     print("[embed] Carregando modelo de embeddings...")
     embeddings = HuggingFaceEmbeddings(
@@ -259,8 +259,8 @@ def main():
 
     vector_store = load_vector_store(embeddings)
 
-    print(f"[llm]   Conectando ao Gemini ({GEMINI_MODEL})...")
-    llm = ChatGoogleGenerativeAI(model=GEMINI_MODEL, temperature=0, max_output_tokens=1024)
+    print(f"[llm]   Conectando ao Groq ({GROQ_MODEL})...")
+    llm = ChatGroq(model=GROQ_MODEL, temperature=0, max_tokens=1024)
 
     rag = ConversationalRAG(vector_store, llm)
     print("[llm]   Pronto.\n")

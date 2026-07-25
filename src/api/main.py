@@ -29,7 +29,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage, AIMessage
 
 from src.api.models import (
@@ -49,7 +49,7 @@ load_dotenv()
 PERSIST_DIR     = Path(__file__).parent.parent.parent / "data" / "chroma_db_v4"
 COLLECTION_NAME = "multi_doc_collection"
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
-GEMINI_MODEL    = "gemini-2.0-flash"
+GROQ_MODEL      = "llama-3.1-8b-instant"
 
 
 # ── ESTADO GLOBAL DA APLICAÇÃO ───────────────────────────────────────────────
@@ -96,8 +96,8 @@ async def lifespan(app: FastAPI):
     chunk_count = vector_store._collection.count()
     print(f"[startup] {chunk_count} chunks indexados.")
 
-    print(f"[startup] Conectando ao Gemini ({GEMINI_MODEL})...")
-    llm = ChatGoogleGenerativeAI(model=GEMINI_MODEL, temperature=0, max_output_tokens=1024)
+    print(f"[startup] Conectando ao Groq ({GROQ_MODEL})...")
+    llm = ChatGroq(model=GROQ_MODEL, temperature=0, max_tokens=1024)
 
     # Armazena no estado global para os endpoints acessarem
     app_state["rag"] = ConversationalRAG(vector_store, llm)
@@ -149,7 +149,7 @@ async def health_check():
     return StatusResponse(
         status="ok",
         chunks_indexed=app_state.get("chunk_count", 0),
-        model=GEMINI_MODEL,
+        model=GROQ_MODEL,
     )
 
 
