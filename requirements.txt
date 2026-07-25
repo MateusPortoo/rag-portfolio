@@ -1,7 +1,7 @@
 # ── Core RAG pipeline ──────────────────────────────────────────────────────
 langchain==0.3.25               # Orquestração do pipeline RAG
 langchain-community==0.3.24     # Integrações: loaders, vector stores
-langchain-anthropic==0.3.15     # Integração Claude API (usada na Fase 2)
+langchain-google-genai==2.1.4   # Integração Gemini API
 
 # ── Document parsing ────────────────────────────────────────────────────────
 pypdf==5.6.0                    # Lê PDFs página a página
@@ -14,7 +14,7 @@ sentence-transformers==4.1.0    # Modelo all-MiniLM-L6-v2 (384 dimensões)
 chromadb==1.0.12                # Banco vetorial local com persistência em disco
 
 # ── API (Fase 6+) ───────────────────────────────────────────────────────────
-fastapi==0.115.14               # Framework web para a API REST
+fastapi==0.115.9                # Framework web para a API REST
 uvicorn[standard]==0.34.3       # Servidor ASGI que roda o FastAPI
 
 # ── Frontend (Fase 8) ────────────────────────────────────────────────────────
@@ -28,4 +28,4 @@ httpx==0.28.1                   # Necessário pelo TestClient do FastAPI
 
 # ── Utilities ───────────────────────────────────────────────────────────────
 python-dotenv==1.1.0            # Lê variáveis de ambiente do .env
-anthropic==0.52.0               # SDK oficial da Anthropic (Fase 2+)
+google-generativeai==0.8.5      # SDK oficial do Google Gemini
