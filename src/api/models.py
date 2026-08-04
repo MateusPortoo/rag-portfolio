@@ -30,7 +30,7 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     """Corpo da resposta do POST /chat"""
 
-    answer: str = Field(description="Resposta gerada pelo Claude.")
+    answer: str = Field(description="Resposta gerada pelo Llama 3.1 8B via Groq.")
     sources: list[str] = Field(description="Arquivos consultados para gerar a resposta.")
     question: str = Field(description="Pergunta reformulada usada no retrieval.")
 
@@ -55,3 +55,4 @@ class StatusResponse(BaseModel):
     status: str
     chunks_indexed: int = Field(description="Número de chunks no banco vetorial.")
     model: str = Field(description="Modelo LLM em uso.")
+
