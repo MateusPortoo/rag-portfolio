@@ -29,7 +29,7 @@ Documents (PDF/DOCX/TXT)
    Similarity Search (top-k chunks)
         │
         ▼
-   Claude claude-sonnet-4-6  →  Answer + Sources
+   Llama 3.1 8B via Groq  →  Answer + Sources
 ```
 
 **Services:**
@@ -49,7 +49,8 @@ cd rag-portfolio
 
 # 2. Set your API key
 cp .env.example .env
-# Edit .env and add: ANTHROPIC_API_KEY=sk-ant-...
+# Edit .env and add: GROQ_API_KEY=gsk_...
+# Get a free key at https://console.groq.com/keys
 
 # 3. Start everything
 docker compose up --build
@@ -70,7 +71,7 @@ pip install -r requirements.txt
 
 # Set API key
 cp .env.example .env
-# Edit .env with your key
+# Edit .env with your Groq key
 
 # Index sample documents
 python src/phase4_multi_doc.py
@@ -144,7 +145,7 @@ pytest --cov=src --cov-report=term-missing
 
 | Layer | Technology |
 |-------|-----------|
-| LLM | Claude claude-sonnet-4-6 (Anthropic) |
+| LLM | Llama 3.1 8B via Groq (free tier) |
 | Embeddings | all-MiniLM-L6-v2 (local, HuggingFace) |
 | Vector DB | ChromaDB (disk-persisted) |
 | Orchestration | LangChain 0.3 |
