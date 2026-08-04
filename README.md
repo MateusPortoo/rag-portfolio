@@ -4,6 +4,8 @@ A production-style RAG (Retrieval-Augmented Generation) system that lets you upl
 
 Built as an AI Engineering portfolio project — every architectural decision is documented.
 
+![CI](https://github.com/MateusPortoo/rag-portfolio/actions/workflows/ci.yml/badge.svg)
+
 ---
 
 ## Architecture
@@ -13,20 +15,23 @@ Documents (PDF/DOCX/TXT)
         │
         ▼
    [Ingest Pipeline]
-   TextLoader / PyPDFLoader
+   TextLoader / PyPDFLoader / Docx2txtLoader
         │ split
         ▼
    RecursiveCharacterTextSplitter (1000 chars, 200 overlap)
+        │ enrich metadata
+        ▼
+   source · doc_type · chunk_index · total_chunks
         │ embed
         ▼
    all-MiniLM-L6-v2  (local, no API cost)
         │ store
         ▼
-   ChromaDB  (persisted to disk)
+   ChromaDB — HNSW (cosine, M=16, ef_construction=200, search_ef=100)
         │
         │  query time
         ▼
-   Similarity Search (top-4 chunks, cosine)
+   Similarity Search (top-4 chunks) + optional metadata filter
         │
         ▼
    Llama 3.1 8B via Groq  →  Answer + Sources
@@ -34,7 +39,7 @@ Documents (PDF/DOCX/TXT)
 
 **Services:**
 - `api` — FastAPI backend (port 8000), RAG pipeline, document ingestion
-- `app` — Streamlit frontend (port 8501), ChatGPT-like interface
+- `app` — Streamlit frontend (port 8501), chat interface
 
 ---
 
@@ -43,46 +48,85 @@ Documents (PDF/DOCX/TXT)
 ### Option 1 — Docker (recommended)
 
 ```bash
-# 1. Clone and enter the project
 git clone <repo-url>
 cd rag-portfolio
 
-# 2. Set your API key
 cp .env.example .env
-# Edit .env and add: GROQ_API_KEY=gsk_...
+# Edit .env: GROQ_API_KEY=gsk_...
 # Get a free key at https://console.groq.com/keys
 
-# 3. Start everything
 docker compose up --build
 
-# 4. Open the chat interface
-open http://localhost:8501        # macOS
-start http://localhost:8501       # Windows
+open http://localhost:8501
 ```
 
-The first startup downloads the embedding model (~90MB). Subsequent starts are fast.
-
-### Option 2 — Local (development)
+### Option 2 — Local
 
 ```bash
-# Install dependencies
 python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
-# Set API key
 cp .env.example .env
 # Edit .env with your Groq key
 
-# Index sample documents
-python src/phase4_multi_doc.py
+python src/phase4_multi_doc.py   # index sample documents
 
-# Terminal 1 — API
-uvicorn src.api.main:app --reload --port 8000
-
-# Terminal 2 — UI
-streamlit run src/app.py
+uvicorn src.api.main:app --reload --port 8000   # terminal 1
+streamlit run src/app.py                         # terminal 2
 ```
+
+---
+
+## HNSW Configuration
+
+ChromaDB uses HNSW (Hierarchical Navigable Small World) as its vector index. This project configures it explicitly instead of using defaults:
+
+| Parameter | Value | Why |
+|-----------|-------|-----|
+| `hnsw:space` | `cosine` | Correct metric for L2-normalized embeddings |
+| `hnsw:construction_ef` | `200` | Higher recall during indexing (default is 100) |
+| `hnsw:M` | `16` | Connections per node — standard for small datasets |
+| `hnsw:search_ef` | `100` | Better recall at query time (default is 10) |
+
+These parameters are set in `src/api/ingest.py → HNSW_CONFIG` and apply when the collection is first created.
+
+**Trade-off:** higher `ef` values improve recall but increase latency. The values above are tuned for a portfolio dataset (< 10k chunks). For millions of chunks, tune with a benchmark first.
+
+---
+
+## Metadata Filtering
+
+Every chunk stored in ChromaDB carries four metadata fields:
+
+| Field | Type | Example | Use case |
+|-------|------|---------|----------|
+| `source` | string | `"politica_empresa.txt"` | Isolate a specific file |
+| `doc_type` | string | `"pdf"`, `"txt"`, `"docx"` | Filter by file type |
+| `chunk_index` | int | `0`, `1`, `2` | Select position within document |
+| `total_chunks` | int | `12` | Know how big the document is |
+
+**Usage via `build_retriever()`:**
+
+```python
+from src.api.ingest import build_retriever
+
+# Search only in one file
+retriever = build_retriever(vector_store, filter={"source": "politica_empresa.txt"})
+
+# Search only in PDFs
+retriever = build_retriever(vector_store, filter={"doc_type": "pdf"})
+
+# Search only in early chunks (document intro / summary)
+retriever = build_retriever(vector_store, filter={"chunk_index": {"$lte": 3}})
+
+# Combine filters (ChromaDB $and syntax)
+retriever = build_retriever(vector_store, filter={
+    "$and": [{"doc_type": "txt"}, {"chunk_index": {"$gte": 2}}]
+})
+```
+
+Metadata filters execute **before** the embedding search — they are O(1) index lookups with no LLM cost.
 
 ---
 
@@ -102,13 +146,13 @@ Interactive docs: `http://localhost:8000/docs`
 
 ### Streaming endpoint
 
-`POST /chat/stream` returns a `text/event-stream` response. Each event is a JSON object:
+`POST /chat/stream` returns `text/event-stream`. Each event is a JSON object:
 
 ```
-data: {"token": "The answer"}     ← partial token while LLM generates
+data: {"token": "The answer"}
 data: {"token": " is 30 days."}
-data: {"done": true, "sources": ["politica_empresa.txt"]}   ← final event
-data: {"error": "..."}            ← only on failure
+data: {"done": true, "sources": ["politica_empresa.txt"]}
+data: {"error": "..."}   ← only on failure
 ```
 
 ---
@@ -117,15 +161,18 @@ data: {"error": "..."}            ← only on failure
 
 ```
 rag-portfolio/
+├── .github/
+│   └── workflows/
+│       └── ci.yml               # GitHub Actions — pytest + coverage
 ├── src/
 │   ├── api/
-│   │   ├── main.py          # FastAPI app, lifespan, chat + stream endpoints
-│   │   ├── documents.py     # Upload + list endpoints
-│   │   ├── ingest.py        # Incremental indexing logic
-│   │   └── models.py        # Pydantic request/response models
-│   ├── app.py               # Streamlit UI
-│   ├── phase1_hello_rag.py  # Phase 1: local pipeline (no LLM)
-│   ├── phase2_rag_with_claude.py  # Phase 2: historical prototype with Claude (discontinued)
+│   │   ├── main.py              # FastAPI app, lifespan, chat + stream endpoints
+│   │   ├── documents.py         # Upload + list endpoints
+│   │   ├── ingest.py            # Indexing: HNSW config, metadata enrichment, retriever builder
+│   │   └── models.py            # Pydantic request/response models
+│   ├── app.py                   # Streamlit UI
+│   ├── phase1_hello_rag.py      # Phase 1: local pipeline without LLM
+│   ├── phase2_rag_with_claude.py  # Phase 2: historical prototype (discontinued)
 │   ├── phase3_persistent_rag.py
 │   ├── phase4_multi_doc.py
 │   └── phase5_chat_history.py
@@ -135,16 +182,16 @@ rag-portfolio/
 │   ├── test_chunking.py
 │   └── test_api.py
 ├── data/
-│   └── sample_docs/         # Drop your documents here
+│   └── sample_docs/             # Drop your documents here
 ├── docs/
-│   └── architecture.md      # All ADRs documented
+│   └── architecture.md
 ├── Dockerfile
 ├── docker-compose.yml
 └── requirements.txt
 ```
 
 > **Note:** `phase2_rag_with_claude.py` is a historical prototype from early development
-> that used Anthropic's Claude API. It is not used by the production pipeline and requires
+> that used Anthropic's Claude API. It is not part of the production pipeline and requires
 > `langchain-anthropic` (not in `requirements.txt`). The production LLM is Llama 3.1 8B via Groq.
 
 ---
@@ -152,9 +199,12 @@ rag-portfolio/
 ## Running Tests
 
 ```bash
-pytest
-pytest --cov=src --cov-report=term-missing
+pytest                                          # run all tests
+pytest --cov=src --cov-report=term-missing      # with coverage report
+pytest tests/test_security.py -v               # single file
 ```
+
+Coverage target: **80%+**
 
 ---
 
@@ -164,9 +214,9 @@ pytest --cov=src --cov-report=term-missing
 |-------|-----------|
 | LLM | Llama 3.1 8B via Groq (free tier) |
 | Embeddings | all-MiniLM-L6-v2 (local, HuggingFace) |
-| Vector DB | ChromaDB (disk-persisted) |
+| Vector DB | ChromaDB with explicit HNSW config |
 | Orchestration | LangChain 0.3 |
 | Backend API | FastAPI + Uvicorn |
 | Frontend | Streamlit |
 | Containers | Docker Compose |
-| Testing | pytest + TestClient |
+| Testing | pytest + coverage (CI via GitHub Actions) |
