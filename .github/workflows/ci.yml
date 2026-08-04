@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: ["master", "main"]
+  pull_request:
+    branches: ["master", "main"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run tests
+        env:
+          GROQ_API_KEY: "fake-key-ci"
+        run: pytest tests/ -v --tb=short --cov=src --cov-report=term-missing
+
+      - name: Check coverage >= 80%
+        env:
+          GROQ_API_KEY: "fake-key-ci"
+        run: pytest tests/ --cov=src --cov-fail-under=80 -q
