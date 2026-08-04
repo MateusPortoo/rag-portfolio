@@ -5,7 +5,9 @@ Transforma o RAG das fases anteriores em uma API REST.
 
 Endpoints:
   GET  /health            → verifica se a API está no ar
-  POST /chat              → envia uma pergunta, recebe resposta + fontes
+  POST /chat              → envia uma pergunta (resposta completa), recebe resposta + fontes
+  GET  /chat/history      → lista as mensagens trocadas na sessão
+  POST /chat/stream       → streaming SSE token a token
   GET  /chat/history      → lista as mensagens trocadas na sessão
   DELETE /chat/history    → limpa o histórico (começa nova conversa)
 
@@ -119,7 +121,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="RAG Document Q&A API",
-    description="API para perguntas e respostas sobre documentos usando RAG + Gemini.",
+    description="API para perguntas e respostas sobre documentos usando RAG + Groq (Llama 3.1 8B).",
     version="1.0.0",
     lifespan=lifespan,
 )
@@ -164,7 +166,7 @@ async def chat(request: ChatRequest):
     O sistema:
     1. Reformula a pergunta usando o histórico da conversa
     2. Busca os chunks mais relevantes no banco vetorial
-    3. Passa os chunks + histórico para o Claude gerar uma resposta
+    3. Passa os chunks + histórico para o Llama 3.1 8B via Groq gerar uma resposta
     4. Retorna a resposta e os arquivos consultados
     """
     rag: ConversationalRAG = app_state.get("rag")
@@ -250,3 +252,4 @@ async def clear_history():
 
     rag.clear_history()
     return {"message": "Histórico limpo com sucesso."}
+
