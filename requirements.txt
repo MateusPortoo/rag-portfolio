@@ -29,3 +29,4 @@ httpx==0.28.1                   # Necessário pelo TestClient do FastAPI
 # ── Utilities ───────────────────────────────────────────────────────────────
 python-dotenv==1.1.0            # Lê variáveis de ambiente do .env
 groq==0.13.1                    # SDK oficial da Groq
+python-multipart==0.0.20        # Upload multipart/form-data (FastAPI file endpoints)
