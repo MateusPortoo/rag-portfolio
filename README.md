@@ -26,7 +26,7 @@ Documents (PDF/DOCX/TXT)
         │
         │  query time
         ▼
-   Similarity Search (top-k chunks)
+   Similarity Search (top-4 chunks, cosine)
         │
         ▼
    Llama 3.1 8B via Groq  →  Answer + Sources
@@ -56,7 +56,8 @@ cp .env.example .env
 docker compose up --build
 
 # 4. Open the chat interface
-open http://localhost:8501
+open http://localhost:8501        # macOS
+start http://localhost:8501       # Windows
 ```
 
 The first startup downloads the embedding model (~90MB). Subsequent starts are fast.
@@ -90,13 +91,25 @@ streamlit run src/app.py
 | Method | Route | Description |
 |--------|-------|-------------|
 | GET | `/health` | API status + chunk count |
-| POST | `/chat` | Ask a question |
+| POST | `/chat` | Ask a question, get full response |
+| POST | `/chat/stream` | Ask a question, get streaming SSE response |
 | GET | `/chat/history` | Conversation history |
 | DELETE | `/chat/history` | Clear history |
 | POST | `/documents/upload` | Upload PDF/DOCX/TXT |
 | GET | `/documents` | List indexed documents |
 
 Interactive docs: `http://localhost:8000/docs`
+
+### Streaming endpoint
+
+`POST /chat/stream` returns a `text/event-stream` response. Each event is a JSON object:
+
+```
+data: {"token": "The answer"}     ← partial token while LLM generates
+data: {"token": " is 30 days."}
+data: {"done": true, "sources": ["politica_empresa.txt"]}   ← final event
+data: {"error": "..."}            ← only on failure
+```
 
 ---
 
@@ -106,13 +119,13 @@ Interactive docs: `http://localhost:8000/docs`
 rag-portfolio/
 ├── src/
 │   ├── api/
-│   │   ├── main.py          # FastAPI app, lifespan, chat endpoints
+│   │   ├── main.py          # FastAPI app, lifespan, chat + stream endpoints
 │   │   ├── documents.py     # Upload + list endpoints
 │   │   ├── ingest.py        # Incremental indexing logic
 │   │   └── models.py        # Pydantic request/response models
 │   ├── app.py               # Streamlit UI
-│   ├── phase1_hello_rag.py  # Phase 1: local pipeline
-│   ├── phase2_rag_with_claude.py
+│   ├── phase1_hello_rag.py  # Phase 1: local pipeline (no LLM)
+│   ├── phase2_rag_with_claude.py  # Phase 2: historical prototype with Claude (discontinued)
 │   ├── phase3_persistent_rag.py
 │   ├── phase4_multi_doc.py
 │   └── phase5_chat_history.py
@@ -129,6 +142,10 @@ rag-portfolio/
 ├── docker-compose.yml
 └── requirements.txt
 ```
+
+> **Note:** `phase2_rag_with_claude.py` is a historical prototype from early development
+> that used Anthropic's Claude API. It is not used by the production pipeline and requires
+> `langchain-anthropic` (not in `requirements.txt`). The production LLM is Llama 3.1 8B via Groq.
 
 ---
 
