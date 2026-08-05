@@ -156,6 +156,26 @@ query -> [LLM] -> hypothetical document -> [embed] -> similarity_search_by_vecto
 Reference: Gao et al. 2022 - Precise Zero-Shot Dense Retrieval without Relevance Labels
 
 The API startup (src/api/main.py) uses HyDE by default.
+---
+
+## Reranking (Cross-Encoder)
+
+After initial retrieval, a **cross-encoder** scores each (query, chunk) pair together and reorders the candidates by true relevance before they reach the LLM.
+
+`
+HyDE retriever → top-15 candidates → cross-encoder → top-5 reranked → LLM
+`
+
+| Stage | Model type | Speed | Accuracy |
+|-------|-----------|-------|----------|
+| Retrieval (HyDE) | Bi-encoder (embed separately) | Fast | Good |
+| Reranking | Cross-encoder (joint attention) | Slower | Better |
+
+**Why cross-encoders are more accurate:** they attend to both the query and the document simultaneously, capturing term interactions that bi-encoders miss.
+
+**Model:** cross-encoder/ms-marco-MiniLM-L-6-v2 (6-layer MiniLM, ~22M params, runs on CPU in <1s for 15 candidates).
+
+
 
 
 
