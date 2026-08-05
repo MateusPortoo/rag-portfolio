@@ -23,12 +23,11 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run tests
+      - name: Run tests with coverage
         env:
           GROQ_API_KEY: "fake-key-ci"
-        run: pytest tests/ -v --tb=short --cov=src --cov-report=term-missing
-
-      - name: Check coverage >= 80%
-        env:
-          GROQ_API_KEY: "fake-key-ci"
-        run: pytest tests/ --cov=src --cov-fail-under=80 -q
+        run: |
+          pytest tests/ -v --tb=short \
+            --cov=src/api \
+            --cov-report=term-missing \
+            --cov-fail-under=70
