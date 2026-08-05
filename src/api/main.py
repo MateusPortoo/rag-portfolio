@@ -108,7 +108,7 @@ async def lifespan(app: FastAPI):
 
     print("[startup] Construindo pipeline HyDE + reranking...")
     hyde_retriever = build_hyde_retriever(vector_store, llm, embeddings, k=15)
-    reranking_retriever = build_reranking_retriever(hyde_retriever, k_final=5, k_candidates=15)
+    reranking_retriever = build_reranking_retriever(hyde_retriever, k_final=5, k_candidates=15, threshold=0.65)
 
     # Armazena no estado global para os endpoints acessarem
     app_state["rag"] = ConversationalRAG(vector_store, llm, retriever=reranking_retriever)
