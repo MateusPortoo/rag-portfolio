@@ -45,6 +45,7 @@ from src.api.models import (
     StatusResponse,
 )
 from src.phase5_chat_history import ConversationalRAG   # reusa a classe da Fase 5
+from src.phase7_hyde import build_hyde_retriever
 from src.api.documents import router as documents_router
 
 load_dotenv()
@@ -104,8 +105,11 @@ async def lifespan(app: FastAPI):
     print(f"[startup] Conectando ao Groq ({GROQ_MODEL})...")
     llm = ChatGroq(model=GROQ_MODEL, temperature=0, max_tokens=1024)
 
+    print("[startup] Construindo índice HyDE...")
+    hyde_retriever = build_hyde_retriever(vector_store, llm, embeddings)
+
     # Armazena no estado global para os endpoints acessarem
-    app_state["rag"] = ConversationalRAG(vector_store, llm)
+    app_state["rag"] = ConversationalRAG(vector_store, llm, retriever=hyde_retriever)
     app_state["chunk_count"] = chunk_count
 
     print("[startup] API pronta! Acesse http://localhost:8000/docs\n")
