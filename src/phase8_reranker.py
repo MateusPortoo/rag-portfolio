@@ -37,12 +37,12 @@ class RerankingRetriever:
       sort by score                 →  top k_final docs
     """
 
-    def __init__(self, base_retriever, k_final: int = 5, k_candidates: int = 15,
-                 model: str = CROSS_ENCODER_MODEL):
+    def __init__(self, base_retriever, k_final: int = 5, k_candidates: int = 15,`n                 threshold: float = 0.0, model: str = CROSS_ENCODER_MODEL):
         self.base_retriever = base_retriever
         self.vectorstore = getattr(base_retriever, "vectorstore", None)
         self.k_final = k_final
         self.k_candidates = k_candidates
+        self.threshold = threshold
         self.cross_encoder = CrossEncoder(model)
 
     def invoke(self, query: str) -> list:
@@ -59,19 +59,17 @@ class RerankingRetriever:
         pairs = [(query, doc.page_content) for doc in candidates]
         scores = self.cross_encoder.predict(pairs)
 
-        ranked = sorted(zip(scores, candidates), key=lambda x: x[0], reverse=True)
-        return [doc for _, doc in ranked[: self.k_final]]
+        ranked = sorted(zip(scores, candidates), key=lambda x: x[0], reverse=True)`n        return [`n            doc for score, doc in ranked[: self.k_final]`n            if score >= self.threshold`n        ]
 
 
-def build_reranking_retriever(base_retriever, k_final: int = 5,
-                              k_candidates: int = 15) -> RerankingRetriever:
+def build_reranking_retriever(base_retriever, k_final: int = 5,`n                              k_candidates: int = 15,`n                              threshold: float = 0.0) -> RerankingRetriever:
     """
     Envolve qualquer retriever com reranking cross-encoder.
 
     k_candidates deve ser maior que k_final para que o reranker
     tenha candidatos suficientes para reordenar.
     """
-    return RerankingRetriever(base_retriever, k_final=k_final, k_candidates=k_candidates)
+    return RerankingRetriever(base_retriever, k_final=k_final,`n                              k_candidates=k_candidates, threshold=threshold)
 
 
 # ── DEMO STANDALONE ───────────────────────────────────────────────────────────
