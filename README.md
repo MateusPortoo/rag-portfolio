@@ -127,6 +127,37 @@ retriever = build_retriever(vector_store, filter={
 ```
 
 Metadata filters execute **before** the embedding search — they are O(1) index lookups with no LLM cost.
+---
+
+## Hybrid Search (BM25 + Semantic + RRF)
+
+The retrieval pipeline in src/phase6_hybrid_rag.py combines **lexical search (BM25)** with **semantic search (ChromaDB)** via **Reciprocal Rank Fusion (RRF)**.
+
+| Method | Strength |
+|--------|----------|
+| BM25 | Exact terms, acronyms, proper nouns, numbers |
+| Semantic | Concepts, paraphrases, natural language |
+| RRF | Combines both rankings without weight tuning |
+
+**RRF formula:** score(d) = sum(1 / (k + rank(d))) where k=60.
+
+---
+
+## HyDE - Hypothetical Document Embeddings
+
+Instead of embedding the query directly, the LLM generates a **hypothetical answer** paragraph first. That paragraph is embedded and used to search ChromaDB.
+
+`
+query -> [LLM] -> hypothetical document -> [embed] -> similarity_search_by_vector -> real chunks
+`
+
+**Why it works:** A hypothetical answer lives in the same vector space as real documents (assertive, document-style prose), so its embedding sits closer to relevant chunks than the query embedding directly.
+
+Reference: Gao et al. 2022 - Precise Zero-Shot Dense Retrieval without Relevance Labels
+
+The API startup (src/api/main.py) uses HyDE by default.
+
+
 
 ---
 
