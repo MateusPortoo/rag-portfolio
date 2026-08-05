@@ -1,0 +1,247 @@
+[
+  {
+    "id": 1,
+    "question": "Quantos dias de férias o colaborador tem direito por ano?",
+    "expected_sources": ["politica_empresa.txt"],
+    "expected_keywords": ["30 dias", "corridos"],
+    "category": "ferias"
+  },
+  {
+    "id": 2,
+    "question": "O colaborador pode dividir as férias em períodos?",
+    "expected_sources": ["politica_empresa.txt"],
+    "expected_keywords": ["3 períodos", "14 dias"],
+    "category": "ferias"
+  },
+  {
+    "id": 3,
+    "question": "Com quanto tempo de antecedência devo solicitar férias?",
+    "expected_sources": ["politica_empresa.txt"],
+    "expected_keywords": ["30 dias", "antecedência"],
+    "category": "ferias"
+  },
+  {
+    "id": 4,
+    "question": "Qual é a duração da licença maternidade?",
+    "expected_sources": ["politica_empresa.txt"],
+    "expected_keywords": ["180 dias", "6 meses"],
+    "category": "licenca"
+  },
+  {
+    "id": 5,
+    "question": "Quantos dias de licença paternidade são concedidos?",
+    "expected_sources": ["politica_empresa.txt"],
+    "expected_keywords": ["20 dias"],
+    "category": "licenca"
+  },
+  {
+    "id": 6,
+    "question": "A partir de qual dia de afastamento médico o INSS assume o pagamento?",
+    "expected_sources": ["politica_empresa.txt"],
+    "expected_keywords": ["16º dia", "INSS", "auxílio-doença"],
+    "category": "licenca"
+  },
+  {
+    "id": 7,
+    "question": "Qual é o plano de saúde oferecido pela empresa?",
+    "expected_sources": ["politica_empresa.txt"],
+    "expected_keywords": ["Amil 400", "Nacional"],
+    "category": "beneficios"
+  },
+  {
+    "id": 8,
+    "question": "Qual é a coparticipação no plano de saúde?",
+    "expected_sources": ["politica_empresa.txt"],
+    "expected_keywords": ["20%", "coparticipação"],
+    "category": "beneficios"
+  },
+  {
+    "id": 9,
+    "question": "Posso incluir dependentes no plano de saúde?",
+    "expected_sources": ["politica_empresa.txt"],
+    "expected_keywords": ["dependentes", "30%", "desconto"],
+    "category": "beneficios"
+  },
+  {
+    "id": 10,
+    "question": "Qual é o valor do vale-refeição por dia?",
+    "expected_sources": ["politica_empresa.txt"],
+    "expected_keywords": ["R$ 45,00", "dia útil"],
+    "category": "beneficios"
+  },
+  {
+    "id": 11,
+    "question": "Quando o vale-refeição é creditado?",
+    "expected_sources": ["politica_empresa.txt"],
+    "expected_keywords": ["dia 25", "cartão Flash"],
+    "category": "beneficios"
+  },
+  {
+    "id": 12,
+    "question": "Quando é pago o salário?",
+    "expected_sources": ["politica_empresa.txt"],
+    "expected_keywords": ["dia 5"],
+    "category": "remuneracao"
+  },
+  {
+    "id": 13,
+    "question": "Como funciona o reajuste salarial anual?",
+    "expected_sources": ["politica_empresa.txt"],
+    "expected_keywords": ["março", "IPCA", "0,5%"],
+    "category": "remuneracao"
+  },
+  {
+    "id": 14,
+    "question": "Qual é o valor da PLR?",
+    "expected_sources": ["politica_empresa.txt"],
+    "expected_keywords": ["0,5", "2 salários", "janeiro"],
+    "category": "remuneracao"
+  },
+  {
+    "id": 15,
+    "question": "Quantos dias presenciais são obrigatórios por semana?",
+    "expected_sources": ["politica_empresa.txt"],
+    "expected_keywords": ["3 dias", "presenciais"],
+    "category": "home_office"
+  },
+  {
+    "id": 16,
+    "question": "Quais dias são fixos para trabalho presencial?",
+    "expected_sources": ["politica_empresa.txt"],
+    "expected_keywords": ["terça", "quarta", "quinta"],
+    "category": "home_office"
+  },
+  {
+    "id": 17,
+    "question": "Qual é o subsídio mensal de home office?",
+    "expected_sources": ["politica_empresa.txt"],
+    "expected_keywords": ["R$ 150,00", "ajuda de custo"],
+    "category": "home_office"
+  },
+  {
+    "id": 18,
+    "question": "Quem pode solicitar regime 100% remoto?",
+    "expected_sources": ["politica_empresa.txt"],
+    "expected_keywords": ["nível 5", "TI"],
+    "category": "home_office"
+  },
+  {
+    "id": 19,
+    "question": "O que acontece se um colaborador violar a confidencialidade?",
+    "expected_sources": ["politica_empresa.txt"],
+    "expected_keywords": ["demissão por justa causa", "processo civil"],
+    "category": "conduta"
+  },
+  {
+    "id": 20,
+    "question": "É permitido relacionamento afetivo entre gestor e subordinado direto?",
+    "expected_sources": ["politica_empresa.txt"],
+    "expected_keywords": ["vedado", "hierarquias diretas"],
+    "category": "conduta"
+  },
+  {
+    "id": 21,
+    "question": "Quais serviços estão incluídos no contrato de TI?",
+    "expected_sources": ["contrato_servico.txt"],
+    "expected_keywords": ["ERP", "suporte", "monitoramento", "backup"],
+    "category": "contrato_objeto"
+  },
+  {
+    "id": 22,
+    "question": "Qual é o tempo máximo de recuperação em caso de desastre (RTO)?",
+    "expected_sources": ["contrato_servico.txt"],
+    "expected_keywords": ["4 horas", "RTO"],
+    "category": "contrato_objeto"
+  },
+  {
+    "id": 23,
+    "question": "Por quanto tempo o contrato de TI é válido?",
+    "expected_sources": ["contrato_servico.txt"],
+    "expected_keywords": ["12 meses", "janeiro de 2024"],
+    "category": "contrato_prazo"
+  },
+  {
+    "id": 24,
+    "question": "O contrato de TI renova automaticamente?",
+    "expected_sources": ["contrato_servico.txt"],
+    "expected_keywords": ["automaticamente", "60 dias"],
+    "category": "contrato_prazo"
+  },
+  {
+    "id": 25,
+    "question": "Qual é o prazo de aviso prévio para rescindir o contrato sem justa causa?",
+    "expected_sources": ["contrato_servico.txt"],
+    "expected_keywords": ["90 dias", "sem multa"],
+    "category": "contrato_prazo"
+  },
+  {
+    "id": 26,
+    "question": "Qual é o valor mensal do contrato de TI?",
+    "expected_sources": ["contrato_servico.txt"],
+    "expected_keywords": ["R$ 28.500,00", "IGP-M"],
+    "category": "contrato_pagamento"
+  },
+  {
+    "id": 27,
+    "question": "Até quando deve ser feito o pagamento do contrato de TI?",
+    "expected_sources": ["contrato_servico.txt"],
+    "expected_keywords": ["dia 15"],
+    "category": "contrato_pagamento"
+  },
+  {
+    "id": 28,
+    "question": "Qual é a multa por atraso no pagamento do contrato?",
+    "expected_sources": ["contrato_servico.txt"],
+    "expected_keywords": ["2%", "1% ao mês"],
+    "category": "contrato_pagamento"
+  },
+  {
+    "id": 29,
+    "question": "Qual é a disponibilidade mínima garantida do ERP?",
+    "expected_sources": ["contrato_servico.txt"],
+    "expected_keywords": ["99,5%"],
+    "category": "sla"
+  },
+  {
+    "id": 30,
+    "question": "Qual é o tempo de resposta para chamado crítico?",
+    "expected_sources": ["contrato_servico.txt"],
+    "expected_keywords": ["30 minutos", "crítico"],
+    "category": "sla"
+  },
+  {
+    "id": 31,
+    "question": "Qual é o tempo de resposta para chamado de baixa prioridade?",
+    "expected_sources": ["contrato_servico.txt"],
+    "expected_keywords": ["3 dias úteis", "baixo"],
+    "category": "sla"
+  },
+  {
+    "id": 32,
+    "question": "Qual é a penalidade por descumprir o SLA de disponibilidade?",
+    "expected_sources": ["contrato_servico.txt"],
+    "expected_keywords": ["5%", "0,5%", "20%"],
+    "category": "sla"
+  },
+  {
+    "id": 33,
+    "question": "Em quanto tempo a fornecedora deve notificar um incidente de segurança?",
+    "expected_sources": ["contrato_servico.txt"],
+    "expected_keywords": ["24 horas"],
+    "category": "lgpd"
+  },
+  {
+    "id": 34,
+    "question": "Quem é a controladora dos dados no contrato de TI?",
+    "expected_sources": ["contrato_servico.txt"],
+    "expected_keywords": ["controladora", "Contratante"],
+    "category": "lgpd"
+  },
+  {
+    "id": 35,
+    "question": "Após quantos dias de inadimplência o fornecedor pode suspender os serviços?",
+    "expected_sources": ["contrato_servico.txt"],
+    "expected_keywords": ["30 dias", "suspender"],
+    "category": "contrato_pagamento"
+  }
+]
