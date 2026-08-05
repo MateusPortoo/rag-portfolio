@@ -125,8 +125,8 @@ class ConversationalRAG:
     Uma função pura não consegue guardar o histórico entre invocações.
     """
 
-    def __init__(self, vector_store: Chroma, llm: ChatGroq):
-        self.retriever = vector_store.as_retriever(search_kwargs={"k": K_CHUNKS})
+    def __init__(self, vector_store: Chroma, llm: ChatGroq, retriever=None):
+        self.retriever = retriever or vector_store.as_retriever(search_kwargs={"k": K_CHUNKS})
         self.llm = llm
         self.history = ChatMessageHistory()  # começa vazio, cresce durante a sessão
 
