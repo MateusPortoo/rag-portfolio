@@ -85,12 +85,13 @@ class TestRerankingThreshold:
         result = reranker.invoke("query")
         assert result == []
 
-    def test_threshold_zero_nao_filtra_scores_negativos(self):
+    def test_threshold_zero_filtra_scores_negativos(self):
+        # threshold=0.0 significa score >= 0.0; scores negativos sao filtrados
         docs = [_make_doc(f"doc {i}") for i in range(4)]
         reranker = _make_reranker(docs, scores=[-5.0, -3.0, -1.0, 0.0],
                                   threshold=0.0)
         result = reranker.invoke("query")
-        assert len(result) == 4
+        assert len(result) == 1  # apenas score=0.0 passa
 
     def test_vectorstore_alias_disponivel(self):
         base = _make_retriever([])
