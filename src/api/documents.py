@@ -53,10 +53,12 @@ def _safe_filename(name: str) -> str:
     Exemplo de ataque: "../../etc/passwd" → rejeitado.
     Mantém apenas letras, números, hífens, underscores e pontos.
     """
-    # Remove qualquer separador de diretório
-    name = Path(name).name
+    # Normaliza separadores (Windows usa \, Unix usa /) e extrai só o nome
+    name = Path(name.replace("\\", "/")).name
     # Permite apenas caracteres seguros
     name = re.sub(r"[^\w\.\-]", "_", name)
+    # Previne sequências de pontos remanescentes (ex: ".." após substituição)
+    name = re.sub(r"\.{2,}", "_", name)
     if not name or name.startswith("."):
         raise HTTPException(status_code=400, detail="Nome de arquivo inválido.")
     return name

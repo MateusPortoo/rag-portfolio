@@ -13,6 +13,8 @@ Por que mockar o RAG?
 """
 
 import io
+from contextlib import asynccontextmanager
+
 import pytest
 from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
@@ -25,11 +27,14 @@ def client():
     """
     Cria um TestClient com o app_state preenchido com um RAG falso.
     O mock imita a interface de ConversationalRAG sem fazer chamadas reais.
+
+    Por que mockar o lifespan?
+    O lifespan real carrega embeddings (~90MB) e exige ChromaDB em disco.
+    Em CI não há banco nem chave real — o lifespan travaria sem o mock.
     """
     from src.api.main import app, app_state
     from langchain_core.messages import HumanMessage, AIMessage
 
-    # Cria um objeto falso que responde como o ConversationalRAG real
     mock_rag = MagicMock()
     mock_rag.ask.return_value = {
         "answer": "Você tem direito a 30 dias de férias.",
@@ -39,16 +44,19 @@ def client():
         HumanMessage(content="Quantos dias de férias?"),
         AIMessage(content="30 dias corridos por ano."),
     ]
-    mock_rag.history.clear = MagicMock()
+    mock_rag.clear_history = MagicMock()
 
-    # Injeta no estado global da app
     app_state["rag"] = mock_rag
     app_state["chunk_count"] = 42
 
-    with TestClient(app) as c:
-        yield c
+    @asynccontextmanager
+    async def _mock_lifespan(app):
+        yield
 
-    # Limpeza após o teste
+    with patch("src.api.main.lifespan", _mock_lifespan):
+        with TestClient(app) as c:
+            yield c
+
     app_state.clear()
 
 
