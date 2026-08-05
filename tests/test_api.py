@@ -16,8 +16,31 @@ import io
 from contextlib import asynccontextmanager
 
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from fastapi.testclient import TestClient
+
+
+# ── helpers ───────────────────────────────────────────────────────────────────
+
+@asynccontextmanager
+async def _noop_lifespan(app):
+    """Lifespan vazio para testes — não carrega embeddings nem ChromaDB."""
+    yield
+
+
+def _make_mock_rag():
+    from langchain_core.messages import HumanMessage, AIMessage
+    mock = MagicMock()
+    mock.ask.return_value = {
+        "answer": "Você tem direito a 30 dias de férias.",
+        "sources": ["politica_empresa.txt"],
+    }
+    mock.history.messages = [
+        HumanMessage(content="Quantos dias de férias?"),
+        AIMessage(content="30 dias corridos por ano."),
+    ]
+    mock.clear_history = MagicMock()
+    return mock
 
 
 # ── FIXTURE: app com RAG mockado ─────────────────────────────────────────────
@@ -25,39 +48,27 @@ from fastapi.testclient import TestClient
 @pytest.fixture
 def client():
     """
-    Cria um TestClient com o app_state preenchido com um RAG falso.
-    O mock imita a interface de ConversationalRAG sem fazer chamadas reais.
+    TestClient com lifespan desativado e app_state pré-populado.
 
-    Por que mockar o lifespan?
-    O lifespan real carrega embeddings (~90MB) e exige ChromaDB em disco.
-    Em CI não há banco nem chave real — o lifespan travaria sem o mock.
+    Por que substituir app.router.lifespan_context?
+    patch("src.api.main.lifespan") não funciona porque o FastAPI já capturou
+    a referência ao lifespan no construtor. A única forma de trocar o lifespan
+    após a criação do app é substituir app.router.lifespan_context diretamente.
     """
     from src.api.main import app, app_state
-    from langchain_core.messages import HumanMessage, AIMessage
 
-    mock_rag = MagicMock()
-    mock_rag.ask.return_value = {
-        "answer": "Você tem direito a 30 dias de férias.",
-        "sources": ["politica_empresa.txt"],
-    }
-    mock_rag.history.messages = [
-        HumanMessage(content="Quantos dias de férias?"),
-        AIMessage(content="30 dias corridos por ano."),
-    ]
-    mock_rag.clear_history = MagicMock()
+    original_lifespan = app.router.lifespan_context
+    app.router.lifespan_context = _noop_lifespan
 
-    app_state["rag"] = mock_rag
+    app_state["rag"] = _make_mock_rag()
     app_state["chunk_count"] = 42
 
-    @asynccontextmanager
-    async def _mock_lifespan(app):
-        yield
-
-    with patch("src.api.main.lifespan", _mock_lifespan):
+    try:
         with TestClient(app) as c:
             yield c
-
-    app_state.clear()
+    finally:
+        app.router.lifespan_context = original_lifespan
+        app_state.clear()
 
 
 # ── GET /health ────────────────────────────────────────────────────────────────
@@ -85,10 +96,16 @@ class TestHealth:
     def test_retorna_503_sem_rag(self):
         """Sem RAG no app_state, deve retornar 503 Service Unavailable."""
         from src.api.main import app, app_state
+
+        original_lifespan = app.router.lifespan_context
+        app.router.lifespan_context = _noop_lifespan
         app_state.clear()
-        with TestClient(app) as c:
-            response = c.get("/health")
-        assert response.status_code == 503
+        try:
+            with TestClient(app) as c:
+                response = c.get("/health")
+            assert response.status_code == 503
+        finally:
+            app.router.lifespan_context = original_lifespan
 
 
 # ── POST /chat ─────────────────────────────────────────────────────────────────
