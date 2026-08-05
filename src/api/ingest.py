@@ -19,7 +19,7 @@ MANIFEST_FILE   = PERSIST_DIR / "manifest.json"
 COLLECTION_NAME = "multi_doc_collection"
 CHUNK_SIZE      = 1000
 CHUNK_OVERLAP   = 200
-N_RESULTS       = 4
+N_RESULTS       = 5
 
 # HNSW: parâmetros do índice vetorial no ChromaDB
 # hnsw:space          → cosine é ideal para embeddings L2-normalizados
