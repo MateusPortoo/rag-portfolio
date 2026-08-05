@@ -16,7 +16,7 @@ import io
 from contextlib import asynccontextmanager
 
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
 
 
